@@ -1,7 +1,7 @@
 <main>
     <h1>Welcome to the Comments Application</h1>
     <p>This is my version 4</p>
-    <p>This is my verison 5</p>
+    <p>This is my verison 5 </p>
     <nav>
         <?php if ($loggedin): ?>
             <a href="login_register.php?action=makepost">Make a New Post</a> | 
