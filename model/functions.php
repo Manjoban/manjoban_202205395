@@ -7,17 +7,17 @@ $db = new PDO($dsn, $dbuser, $dbpass);
 
 // Functions related to user accounts
 
+	
 function notEmptyAccount($username, $password, $email, $fname, $lname){
 		//Not every function deals with DB connections
 		//This function checks for empty variables and is used for form validation
 		//returns true if non of the variables (parameters) are empty or returns false if one or more of them are empty
-		if(empty($username) OR empty($password) OR empty($email) OR empty($fname) OR empty($lname)){
+		if(empty($username) OR empty($password) OR empty($email) OR empty($fname) OR empty($lname))
 			return false;
-	}
-		else {
-			return true;
-		}
-	}
+		
+		return true;
+} 
+	
 function addAccount($username, $password, $email, $fname, $lname) {
     global $db;
     $query = 'INSERT INTO accounts (username, password, email, fname, lname) VALUES (:username, :password, :email, :fname, :lname)';
@@ -70,7 +70,7 @@ function getAccountDetails($accountid) {
 // Functions related to comments
 function addComment($user_id, $comment) {
     global $db;
-    $query = 'INSERT INTO comments (user_id, comment,posted_date) VALUES (:user_id, :comment, CURRENT_TIMESTAMP)';
+    $query = 'INSERT INTO comments (user_id, comment) VALUES (:user_id, :comment)';
     $statement = $db->prepare($query);
     $statement->bindValue(':user_id', $user_id);
     $statement->bindValue(':comment', $comment);
@@ -80,7 +80,7 @@ function addComment($user_id, $comment) {
 
 function getAllComments() {
     global $db;
-    $query = 'SELECT c.id, c.comment, c.user_id, c.posted_date, a.username, a.fname, a.lname FROM comments c JOIN accounts a ON c.user_id = a.id ORDER BY c.posted_date DESC';
+    $query = 'SELECT c.*, u.username, u.fname, u.lname FROM comments c JOIN accounts u ON c.user_id = u.id ORDER BY c.posted_date DESC';
     $statement = $db->prepare($query);
     $statement->execute();
     $comments = $statement->fetchAll();
@@ -88,23 +88,23 @@ function getAllComments() {
     return $comments;
 }
 
-function getCommentById($id) {
+function getCommentById($commentId) {
     global $db;
-    $query = 'SELECT * FROM comments WHERE id = :id';
+    $query = 'SELECT * FROM comments WHERE id = :commentID';
     $statement = $db->prepare($query);
-    $statement->bindValue(':id', $id);
+    $statement->bindValue(':commentID', $commentId);
     $statement->execute();
     $comment = $statement->fetch();
     $statement->closeCursor();
     return $comment;
 }
 
-function updateComment($id, $comment) {
+function updateComment($commentId, $newComment) {
     global $db;
-    $query = 'UPDATE comments SET comment = :comment WHERE id = :id';
+    $query = 'UPDATE comments SET comment = :newComment WHERE id = :commentId';
     $statement = $db->prepare($query);
-    $statement->bindValue(':id', $id);
-    $statement->bindValue(':comment', $comment);
+	$statement->bindValue(':newComment', $newComment);
+    $statement->bindValue(':commentId', $commentId);
     $statement->execute();
     $statement->closeCursor();
 }
@@ -117,4 +117,29 @@ function deleteComment($id) {
     $statement->execute();
     $statement->closeCursor();
 }
+
+
+function resultHtml($comments, $loggedin) {
+    $output = "<h2>Posts</h2>";
+
+    if (empty($comments)) {
+        $output .= "<p>No posts available.</p>";
+    } else {
+        foreach ($comments as $comment) {
+            $output .= "<p><strong>" . htmlspecialchars($comment['username']) . ":</strong> " . 
+                     htmlspecialchars($comment['comment']) . "<br>Posted on: " . 
+                     $comment['posted_date'];
+
+            if ($loggedin && $comment['user_id'] == $_SESSION['accountid']) {
+                $output .= ' <a href="login_register.php?action=edit&id=' . $comment['id'] . '">Edit</a> | ';
+                $output .= '<a href="login_register.php?action=delete&id=' . $comment['id'] . '">Delete</a>';
+            }
+
+            $output .= "</p>";
+        }
+    }
+
+    return $output;
+}
+
 ?>

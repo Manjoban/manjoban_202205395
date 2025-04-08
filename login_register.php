@@ -1,6 +1,5 @@
 <?php
 session_start();
-include("model/functions.php");
 
 //Check if this client is authenticated (logged in)
 if(isset($_SESSION['loggedin']))
@@ -23,17 +22,19 @@ else
 	$menu = "<a href='login_register.php?action=loginform'>Login</a> | <a href='login_register.php?action=register'>Register</a>";
 }
 
-//Get the user 'action'
-//Check the POST array for a value with the name 'action' (form submission)
+include("model/functions.php");
+
 $action = filter_input(INPUT_POST, 'action');
 //If NULL - nothing found in POST array - check the GET array (URL submission)
 if($action == NULL)
 	$action = filter_input(INPUT_GET, 'action');
+	
 $error="";
-
+	
 if ($action == 'register') {
     include('view/registerform.php');
-} elseif ($action == 'Submit Registration') {
+
+}elseif ($action == 'Submit Registration') {
     $username = filter_input(INPUT_POST, 'username');
     $password = filter_input(INPUT_POST, 'password');
     $email = filter_input(INPUT_POST, 'email');
@@ -43,7 +44,7 @@ if ($action == 'register') {
     if (notEmptyAccount($username, $password, $email, $fname, $lname)) {
         if (checkUsername($username)) {
             addAccount($username, $password, $email, $fname, $lname);
-            header("Location: login_register.php?action=loginform");
+            header("Location: view/registerationdone.php");
         } else {
             $error = "Username is not available.";
             include('view/registerform.php');
@@ -58,7 +59,7 @@ if ($action == 'register') {
     $username = filter_input(INPUT_POST, 'username');
     $password = filter_input(INPUT_POST, 'password');
     $account = processLogin($username, $password);
-    if ($account != NULL) {
+    if ($account) {
         $_SESSION['loggedin'] = true;
         $_SESSION['accountid'] = $account['id'];
         $_SESSION['username'] = $account['username'];
@@ -91,7 +92,8 @@ if ($action == 'register') {
 } elseif ($action == 'edit') {
     $commentId = filter_input(INPUT_GET, 'id');
     $comment = getCommentById($commentId);
-    include('view/edit.php');
+	$editComment=trim($comment['comment']);
+    include('view/editpost.php');
 } elseif ($action == 'Update Comment') {
     $commentId = filter_input(INPUT_POST, 'id');
     $newComment = filter_input(INPUT_POST, 'comment');
@@ -99,6 +101,7 @@ if ($action == 'register') {
     header("Location: login_register.php");
 } else {
     $comments = getAllComments();
+	$output=resultHtml($comments, $loggedin);
     include('view/home.php');
 }
 ?>
